@@ -30,23 +30,40 @@ def fit_regression_model(X, y):
     Hint 2: while woring you can use the print function to print the loss every 1000 epochs.
     Hint 3: you can use the previos_loss variable to stop the training when the loss is not changing much.
     """
-    learning_rate = 0.01 # Pick a better learning rate
-    num_epochs = 100 # Pick a better number of epochs
-    input_features = 0 # extract the number of features from the input `shape` of X
-    output_features = 0 # extract the number of features from the output `shape` of y
+
+    learning_rate = 0.0001 # Using a small learning rate to avoid divergence (0.1 wasn't working for me)
+    num_epochs = 10000 # The initial 100 was not enough to get a good model
+    input_features = X.shape[1] # Instead of 0, we need to extract the number of features from the input `shape` of X
+    output_features = y.shape[1] # Instead of 0, we need to extract the number of features from the input `shape` of y
     model = create_linear_regression_model(input_features, output_features)
-    
-    loss_fn = nn.L1Loss() # Use mean squared error loss, like in class
+
+    # Initialize the model weights and bias
+    nn.init.xavier_uniform_(model.weight)
+    nn.init.zeros_(model.bias)
+    loss_fn = nn.MSELoss() # Use mean squared error loss as requested by the professor
 
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
-    previos_loss = float("inf")
+    previous_loss = float("inf")
 
-    for epoch in range(1, num_epochs):
+    print('=== Starting the training the model ===')
+    print(f'= Input features: {input_features}')
+    print(f'= Learning rate: {learning_rate}')
+    print(f'= Number of epochs: {num_epochs}')
+    print(f'= Initial loss: {previous_loss}')
+
+    for epoch in range(num_epochs):
         loss = train_iteration(X, y, model, loss_fn, optimizer)
-        if False: # Change this condition to stop the training when the loss is not changing much.
+
+        # Stop the training if the loss is not changing much (less than 1e-5)
+        if abs(previous_loss - loss.item()) < 1e-5:
+            print(f'[STOP] [{epoch}] Current loss: {loss.item()}. Previous loss: {previous_loss}. Stopping training.')
             break
-        previos_loss = loss.item()
-        # This is a good place to print the loss every 1000 epochs.
+
+        previous_loss = loss.item()
+
+        # Let's print the loss every 500 epochs
+        if epoch % 500 == 0:
+            print(f'[{epoch}] Current loss: {loss.item()}')
     return model, loss
 
